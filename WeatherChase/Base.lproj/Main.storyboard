@@ -24,10 +24,10 @@
             </objects>
             <point key="canvasLocation" x="-561" y="-42"/>
         </scene>
-        <!--View Controller-->
+        <!--Main View Controller-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController id="BYZ-38-t0r" customClass="ViewController" customModule="WeatherChase" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController id="BYZ-38-t0r" customClass="MainViewController" customModule="WeatherChase" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -39,10 +39,18 @@
                                     <outlet property="delegate" destination="BYZ-38-t0r" id="sdH-hC-dxA"/>
                                 </connections>
                             </searchBar>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Hello there!" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Jdr-NQ-VjZ">
+                                <rect key="frame" x="120" y="407.66666666666669" width="153" height="37"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="31"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
+                            <constraint firstItem="Jdr-NQ-VjZ" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="1YA-mj-Qa3"/>
+                            <constraint firstItem="Jdr-NQ-VjZ" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="48S-AR-C95"/>
                             <constraint firstItem="GAc-pB-jAN" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="DZQ-EI-SiK"/>
                             <constraint firstItem="GAc-pB-jAN" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="MhW-nJ-Qx8"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="GAc-pB-jAN" secondAttribute="trailing" id="fJb-DT-jvU"/>
@@ -56,14 +64,6 @@
                     <navigationItem key="navigationItem" id="dxB-zG-czA"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
-                <searchBar contentMode="redraw" placeholder="Zipcode or city, state" id="IsO-hf-s7V">
-                    <rect key="frame" x="0.0" y="0.0" width="393" height="44"/>
-                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
-                    <textInputTraits key="textInputTraits" textContentType="location"/>
-                    <connections>
-                        <outlet property="delegate" destination="BYZ-38-t0r" id="Fmm-fe-sdO"/>
-                    </connections>
-                </searchBar>
             </objects>
             <point key="canvasLocation" x="210" y="-42"/>
         </scene>
