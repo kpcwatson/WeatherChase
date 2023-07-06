@@ -113,6 +113,7 @@ extension MainViewController {
         searchController = UISearchController(searchResultsController: resultsTableViewController)
         searchController.searchResultsUpdater = resultsTableViewController.searchViewModel
         searchController.searchBar.delegate = self
+        searchController.searchBar.placeholder = "Search City or Postal Code"
 
         navigationItem.searchController = searchController
         navigationItem.hidesSearchBarWhenScrolling = false
