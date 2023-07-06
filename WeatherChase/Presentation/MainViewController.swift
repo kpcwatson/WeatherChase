@@ -12,9 +12,7 @@ import Combine
 // Using kingfisher for convenience, though it ignored those in the past.
 import Kingfisher
 
-let OPENWEATHER_APP_ID = "19b5ed9208de3282221235240f1cf119"
-
-// TODO: need to populate from user defaults
+let OPENWEATHER_APP_ID = ""
 
 /**
     Notes:
@@ -46,6 +44,8 @@ class MainViewController: UIViewController {
 
     private var subscriptions = Set<AnyCancellable>()
 
+    private var locationManager: LocationManager?
+
     override func viewDidLoad() {
         super.viewDidLoad()
         weatherStackView.isHidden = true
@@ -59,9 +59,31 @@ class MainViewController: UIViewController {
                 self?.populateContent()
             }
             .store(in: &subscriptions)
+
+        weatherViewModel.$selectedPlace
+            .map({ $0?.name })
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.title, on: self)
+            .store(in: &subscriptions)
     }
 
-    func populateContent() {
+    @IBAction func currentLocationSelected(_ sender: UIBarButtonItem) {
+        locationManager = LocationManager()
+
+        locationManager?.locationSubject
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { completion in
+                if case let .failure(error) = completion {
+                    print("error: \(error)", error.localizedDescription)
+                }
+            }, receiveValue: { [weak weatherViewModel] place in
+                weatherViewModel?.selectedPlace = place
+            })
+            .store(in: &subscriptions)
+    }
+
+
+    private func populateContent() {
         iconImageView.kf.setImage(with: weatherViewModel.currentWeather?.iconUrl)
 
         placeLabel.text = weatherViewModel.placeLabelText

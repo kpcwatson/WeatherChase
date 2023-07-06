@@ -209,7 +209,13 @@
                             </mask>
                         </variation>
                     </view>
-                    <navigationItem key="navigationItem" id="dxB-zG-czA"/>
+                    <navigationItem key="navigationItem" id="dxB-zG-czA">
+                        <barButtonItem key="rightBarButtonItem" title="Current Location" image="location" catalog="system" style="plain" id="Rnb-ft-TyD">
+                            <connections>
+                                <action selector="currentLocationSelected:" destination="BYZ-38-t0r" id="mdg-OJ-Wf9"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
                     <connections>
                         <outlet property="activityIndicator" destination="W2B-H9-zjG" id="bxs-HJ-lkx"/>
                         <outlet property="conditionLabel" destination="Dtc-PK-H7m" id="flp-MV-DSS"/>
@@ -268,6 +274,7 @@
         </scene>
     </scenes>
     <resources>
+        <image name="location" catalog="system" width="128" height="121"/>
         <systemColor name="systemBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>

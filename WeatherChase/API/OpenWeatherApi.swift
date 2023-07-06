@@ -61,6 +61,9 @@ class OpenWeatherApiClient {
     }
 
     func currentConditions(at coordinate: Coordinate) async throws -> CurrentCondition {
+
+        precondition(OPENWEATHER_APP_ID.count > 0, "OPENWEATHER_APP_ID must be set. Provide your API key from OpenWeather")
+        
         let queryItems = [  // TODO: make composable
             URLQueryItem(name: "lat", value: String(coordinate.latitude)),
             URLQueryItem(name: "lon", value: String(coordinate.longitude)),

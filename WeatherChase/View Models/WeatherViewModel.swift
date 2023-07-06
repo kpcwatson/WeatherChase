@@ -70,6 +70,11 @@ class WeatherViewModel: NSObject {
     }
 }
 
+// MARK: - User's Location
+extension WeatherViewModel {
+
+}
+
 // MARK: - Formatted strings for displaying in UI
 extension WeatherViewModel {
 
