@@ -15,62 +15,52 @@ import CoreLocation // TODO: remove
 
 class MainViewController: UIViewController {
 
-//    private var weatherViewModel = WeatherViewModel()
+    private var weatherViewModel = WeatherViewModel()
+
     private var searchController: UISearchController!
     private var resultsTableViewController: ResultsTableViewController!
 
-    private var geocodeTask: Task<Void, Error>?
     private var subscriptions = Set<AnyCancellable>()
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        resultsTableViewController = storyboard?.instantiateViewController(withIdentifier: "ResultsTableViewController") as? ResultsTableViewController
+        resultsTableViewController = storyboard?.instantiateViewController(
+            identifier: "ResultsTableViewController",
+            creator: createResultsController)
 
         searchController = UISearchController(searchResultsController: resultsTableViewController)
-        searchController.searchResultsUpdater = self
+        searchController.searchResultsUpdater = resultsTableViewController.searchViewModel
         searchController.searchBar.delegate = self
 
         navigationItem.searchController = searchController
         navigationItem.hidesSearchBarWhenScrolling = false
 
         definesPresentationContext = true
+    }
 
-        resultsTableViewController.selectedLocationSubject
-            .sink { location in
-                //
-                print("location> \(location)")
+    private func createResultsController(_ coder: NSCoder) -> ResultsTableViewController? {
+        let searchViewModel = SearchViewModel()
+        
+        searchViewModel.selectedLocationSubject
+            .sink { [weak self] location in
+                self?.searchController.dismiss(animated: true)
+
+                // clear out search
+                self?.searchController.searchBar.text = nil
+                self?.searchController.searchBar.searchTextField.text = nil
+
+                // store in user defaults
+                self?.weatherViewModel.selectedLocation = location
             }
             .store(in: &subscriptions)
+
+        return ResultsTableViewController(coder: coder, viewModel: searchViewModel)
     }
 }
 
 extension MainViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         searchBar.resignFirstResponder()
-    }
-}
-
-extension MainViewController: UISearchResultsUpdating {
-
-    func updateSearchResults(for searchController: UISearchController) {
-        guard let text = searchController.searchBar.text else { return }
-
-        let trimmedText = text.trimmingCharacters(in: .whitespaces)
-
-        guard trimmedText.count > 0 else { return }
-
-        let geocoder = CLGeocoder()
-        geocoder.cancelGeocode()
-
-        geocodeTask?.cancel()
-        geocodeTask = Task.detached(priority: .userInitiated) { [unowned self] in
-            let placemarks = try await geocoder.geocodeAddressString(trimmedText)
-
-            await MainActor.run {
-                resultsTableViewController.placemarks = placemarks
-                geocodeTask = nil
-            }
-        }
     }
 }
