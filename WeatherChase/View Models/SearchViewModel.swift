@@ -9,26 +9,6 @@ import CoreLocation
 import UIKit
 import Combine
 
-struct Place: Sendable {
-    let name: String
-    let coordinate: Coordinate
-}
-
-struct Coordinate: Sendable {
-    let latitude: Double
-    let longitude: Double
-}
-
-extension Coordinate {
-    init(from location: CLLocation) {
-        self.init(from: location.coordinate)
-    }
-
-    init(from coordinate: CLLocationCoordinate2D) {
-        self.init(latitude: coordinate.latitude, longitude: coordinate.longitude)
-    }
-}
-
 class SearchViewModel: NSObject {
 
     let selectedPlaceSubject = PassthroughSubject<Place, Never>()

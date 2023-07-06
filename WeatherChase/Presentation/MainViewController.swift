@@ -7,13 +7,12 @@
 
 import UIKit
 import Combine
+
+// Icon responses include ETag, last-modified and cache-control.
+// Using kingfisher for convenience, though it ignored those in the past.
 import Kingfisher
 
-// ICONS
-// https://openweathermap.org/img/wn/{icon}@2x.png
-// for caching, icon responses include ETag, last-modified and cache-control: max-age
-
-let OPENWEATHER_APP_ID = "19b5ed9208de3282221235240f1cf119"
+let OPENWEATHER_APP_ID = ""
 
 // TODO: need to populate from user defaults
 
@@ -49,7 +48,6 @@ class MainViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
         weatherStackView.isHidden = true
 
         setupSearchController()

@@ -8,20 +8,23 @@
 import CoreLocation
 import Combine
 
+private let selectedPlaceKey = "SelectedPlace"
+
 class WeatherViewModel: NSObject {
 
     @Published var selectedPlace: Place? {
         didSet {
             if let place = selectedPlace {
                 fetchCurrentConditions(for: place)
+                persistPlaceInUserDefaults(place)
             }
         }
     }
 
     @Published var currentWeather: CurrentWeather?
-    
-    private var subscriptions = Set<AnyCancellable>()
+
     private let apiClient = OpenWeatherApiClient()
+    private var subscriptions = Set<AnyCancellable>()
 
     private lazy var dateFormatter: DateFormatter = {
         var formatter = DateFormatter()
@@ -30,7 +33,30 @@ class WeatherViewModel: NSObject {
         return formatter
     }()
 
-    func fetchCurrentConditions(for place: Place) {
+    override init() {
+        super.init()
+
+        if let place = retrievePlaceFromUserDefaults() {
+            selectedPlace = place
+        }
+    }
+
+    private func persistPlaceInUserDefaults(_ place: Place) {
+        let encoder = PropertyListEncoder()
+        let encodedPlace = try? encoder.encode(place)
+        UserDefaults.standard.set(encodedPlace, forKey: selectedPlaceKey)
+    }
+
+    private func retrievePlaceFromUserDefaults() -> Place? {
+        guard let encodedPlace = UserDefaults.standard.value(forKey: selectedPlaceKey) as? Data else {
+            return nil
+        }
+        let decoder = PropertyListDecoder()
+        let place = try? decoder.decode(Place.self, from: encodedPlace)
+        return place
+    }
+
+    private func fetchCurrentConditions(for place: Place) {
         Task(priority: .userInitiated) {
             do {
                 let conditions = try await apiClient.currentConditions(at: place.coordinate)
