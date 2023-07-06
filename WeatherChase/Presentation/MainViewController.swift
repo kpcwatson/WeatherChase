@@ -19,6 +19,7 @@ let OPENWEATHER_APP_ID = ""
     1. Using Core Location for geocode instead of OpenWeather's API, since splitting the query into zip vs. city/state would have been more work.
     2. Would ideally use a collection view.
     3. Needs better error handling.
+    4. Code became a little messy trying to complete quickly. Ideally MainViewController would be smaller.
  */
 class MainViewController: UIViewController {
 
@@ -44,7 +45,7 @@ class MainViewController: UIViewController {
 
     private var subscriptions = Set<AnyCancellable>()
 
-    private var locationManager: LocationManager?
+    private var locationManager: LocationManager?   // TODO: move to viewModel
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -56,7 +57,7 @@ class MainViewController: UIViewController {
             .compactMap { $0 }
             .receive(on: DispatchQueue.main)
             .sink { [weak self] weather in
-                self?.populateContent()
+                self?.populateWeatherDetails()
             }
             .store(in: &subscriptions)
 
@@ -83,7 +84,7 @@ class MainViewController: UIViewController {
     }
 
 
-    private func populateContent() {
+    private func populateWeatherDetails() {
         iconImageView.kf.setImage(with: weatherViewModel.currentWeather?.iconUrl)
 
         placeLabel.text = weatherViewModel.placeLabelText

@@ -10,7 +10,7 @@ import Combine
 
 class LocationManager: NSObject {
 
-    let locationManager = CLLocationManager()
+    private let locationManager = CLLocationManager()
     let locationSubject = PassthroughSubject<Place, Error>()
 
     override init() {
