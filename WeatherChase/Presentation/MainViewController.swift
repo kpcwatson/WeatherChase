@@ -7,12 +7,15 @@
 
 import UIKit
 import Combine
+import Kingfisher
 
 // ICONS
 // https://openweathermap.org/img/wn/{icon}@2x.png
 // for caching, icon responses include ETag, last-modified and cache-control: max-age
 
-let OPENWEATHER_APP_ID = ""
+let OPENWEATHER_APP_ID = "19b5ed9208de3282221235240f1cf119"
+
+// TODO: need to populate from user defaults
 
 /**
     Notes:
@@ -43,12 +46,6 @@ class MainViewController: UIViewController {
     private var resultsTableViewController: ResultsTableViewController!
 
     private var subscriptions = Set<AnyCancellable>()
-    private lazy var formatter: DateFormatter = {
-        var formatter = DateFormatter()
-        formatter.dateStyle = .none
-        formatter.timeStyle = .medium
-        return formatter
-    }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -57,49 +54,28 @@ class MainViewController: UIViewController {
 
         setupSearchController()
 
-        weatherViewModel.$weather
-            .sink { completion in
-                print("weather completed")
-            } receiveValue: { [weak self] weather in
-                guard let weather = weather else { return }
-                print("received: \(weather)")
-
-                self?.populateContent(for: weather)
+        weatherViewModel.$currentWeather
+            .compactMap { $0 }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] weather in
+                self?.populateContent()
             }
             .store(in: &subscriptions)
     }
 
-    // TODO: move formatting to view model
-    func populateContent(for weather: WeatherModel) {
-        placeLabel.text = weather.title
-        currentTempLabel.text = "\(weather.currentTemperature)º F"
-        conditionLabel.text = weather.currentConditions
-        highTempLabel.text = {
-            guard let max = weather.maximumTemperature else { return nil }
-            return "HI: \(max)º F"
-        }()
-        lowTempLabel.text = {
-            guard let min = weather.minimumTemperature else { return nil }
-            return "LO: \(min)º F"
-        }()
-        humidityLabel.text = "Humidity: \(weather.humidity)%"
-        feelsLikeLabel.text = {
-            guard let feelsLike = weather.feelsLike else { return nil }
-            return "Feels Like: \(feelsLike)º F"
-        }()
-        sunriseLabel.text = {
-            guard let sunrise = weather.sunrise else { return nil }
-            return "Sunrise: \(formatter.string(from: Date(timeIntervalSince1970: sunrise)))"
-        }()
-        sunsetLabel.text = {
-            guard let sunset = weather.sunset else { return nil }
-            return "Sunset: \(formatter.string(from: Date(timeIntervalSince1970: sunset)))"
-        }()
-/*
-        iconImageView.image = {
+    func populateContent() {
+        iconImageView.kf.setImage(with: weatherViewModel.currentWeather?.iconUrl)
 
-        }()
-*/
+        placeLabel.text = weatherViewModel.placeLabelText
+        currentTempLabel.text = weatherViewModel.currentTempLabelText
+        conditionLabel.text = weatherViewModel.currentConditionsLabelText
+        highTempLabel.text = weatherViewModel.highTempLabelText
+        lowTempLabel.text = weatherViewModel.lowTempLabel
+        humidityLabel.text = weatherViewModel.humidityLabelText
+        feelsLikeLabel.text = weatherViewModel.feelsLikeLabelText
+        sunriseLabel.text = weatherViewModel.sunriseLabelText
+        sunsetLabel.text = weatherViewModel.sunsetLabelText
+
         activityIndicator.stopAnimating()
         weatherStackView.isHidden = false
     }
@@ -127,7 +103,7 @@ extension MainViewController {
         let searchViewModel = SearchViewModel()
 
         searchViewModel.selectedPlaceSubject
-            .sink { [weak self] place in
+            .sink { [weak self] place in    // TODO: a little ugly
                 self?.searchController.dismiss(animated: true)
 
                 // clear out search

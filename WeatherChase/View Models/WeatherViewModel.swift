@@ -8,88 +8,87 @@
 import CoreLocation
 import Combine
 
-struct WeatherModel: Sendable {
-    let title: String
-    let iconUrl: URL?
-    let currentTemperature: Double
-    let currentConditions: String
-    let maximumTemperature: Double?
-    let minimumTemperature: Double?
-    let feelsLike: Double?
-    let humidity: Int
-    let pressure: Int?
-    let windSpeed: Double
-    let windDegree: Int
-    let sunrise: TimeInterval?
-    let sunset: TimeInterval?
-}
-
-extension WeatherModel {
-    init(from currentCondition: CurrentCondition) {
-
-        title = currentCondition.cityName ?? "Location"
-
-        iconUrl = {
-            if let icon = currentCondition.weather.first?.icon {
-                return URL(string: "https://openweathermap.org/img/wn/\(icon)@2x.png")!
-            } else {
-                return nil
-            }
-        }()
-
-        currentConditions = currentCondition.weather
-            .map({ $0.main })
-            .joined(separator: ", ")
-
-        currentTemperature = currentCondition.main.temperature
-        maximumTemperature = currentCondition.main.temperatureMax
-        minimumTemperature = currentCondition.main.temperatureMin
-        feelsLike = currentCondition.main.feelsLike
-        humidity = currentCondition.main.humidity
-        pressure = currentCondition.main.pressure
-        windSpeed = currentCondition.wind.speed
-        windDegree = currentCondition.wind.degree
-        sunrise = currentCondition.system.sunrise
-        sunset = currentCondition.system.sunset
-    }
-}
 class WeatherViewModel: NSObject {
-
-    enum Section: Int, CaseIterable {
-        case title
-        case main
-        case additional
-    }
 
     @Published var selectedPlace: Place? {
         didSet {
-            print("set selected location: \(String(describing: selectedPlace))")
             if let place = selectedPlace {
                 fetchCurrentConditions(for: place)
             }
         }
     }
 
-    @Published var weather: WeatherModel?
+    @Published var currentWeather: CurrentWeather?
     
     private var subscriptions = Set<AnyCancellable>()
     private let apiClient = OpenWeatherApiClient()
 
-    // call to get weather
+    private lazy var dateFormatter: DateFormatter = {
+        var formatter = DateFormatter()
+        formatter.dateStyle = .none
+        formatter.timeStyle = .short
+        return formatter
+    }()
 
     func fetchCurrentConditions(for place: Place) {
         Task(priority: .userInitiated) {
             do {
                 let conditions = try await apiClient.currentConditions(at: place.coordinate)
-                let weatherModel = WeatherModel(from: conditions)
-                print("weatherModel: \(weatherModel)")
                 await MainActor.run {
-                    weather = weatherModel
+                    currentWeather = CurrentWeather(from: conditions)
                 }
             } catch {
                 print(error, error.localizedDescription)
             }
         }
+    }
+}
 
+// MARK: - Formatted strings for displaying in UI
+extension WeatherViewModel {
+
+    var placeLabelText: String? {
+        guard let title = currentWeather?.title else { return nil }
+        return title
+    }
+
+    var currentTempLabelText: String? {
+        guard let temp = currentWeather?.currentTemperature else { return nil }
+        return "\(temp)º F"
+    }
+
+    var currentConditionsLabelText: String? {
+        guard let conditions = currentWeather?.currentConditions else { return nil }
+        return conditions
+    }
+
+    var highTempLabelText: String? {
+        guard let max = currentWeather?.maximumTemperature else { return nil }
+        return "HI: \(max)º F"
+    }
+
+    var lowTempLabel: String? {
+        guard let min = currentWeather?.minimumTemperature else { return nil }
+        return "LO: \(min)º F"
+    }
+
+    var humidityLabelText: String? {
+        guard let humidity = currentWeather?.humidity else { return nil }
+        return "Humidity: \(humidity)%"
+    }
+
+    var feelsLikeLabelText: String? {
+        guard let feelsLike = currentWeather?.feelsLike else { return nil }
+        return "Feels Like \(feelsLike)º F"
+    }
+
+    var sunriseLabelText: String? {
+        guard let sunrise = currentWeather?.sunrise else { return nil }
+        return "Sunrise: \(dateFormatter.string(from: Date(timeIntervalSince1970: sunrise)))"
+    }
+
+    var sunsetLabelText: String? {
+        guard let sunset = currentWeather?.sunset else { return nil }
+        return "Sunset: \(dateFormatter.string(from: Date(timeIntervalSince1970: sunset)))"
     }
 }
