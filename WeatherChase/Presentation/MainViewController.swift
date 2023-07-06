@@ -12,7 +12,7 @@ import Combine
 // Using kingfisher for convenience, though it ignored those in the past.
 import Kingfisher
 
-let OPENWEATHER_APP_ID = ""
+let OPENWEATHER_APP_ID = "19b5ed9208de3282221235240f1cf119"
 
 // TODO: need to populate from user defaults
 
