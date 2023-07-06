@@ -9,17 +9,29 @@ import CoreLocation
 import UIKit
 import Combine
 
-private extension CLPlacemark {
-    var cellText: String {
-        [name, locality, postalCode, administrativeArea, country]
-            .compactMap { $0 }
-            .joined(separator: ", ")
+struct Place: Sendable {
+    let name: String
+    let coordinate: Coordinate
+}
+
+struct Coordinate: Sendable {
+    let latitude: Double
+    let longitude: Double
+}
+
+extension Coordinate {
+    init(from location: CLLocation) {
+        self.init(from: location.coordinate)
+    }
+
+    init(from coordinate: CLLocationCoordinate2D) {
+        self.init(latitude: coordinate.latitude, longitude: coordinate.longitude)
     }
 }
 
 class SearchViewModel: NSObject {
 
-    let selectedLocationSubject = PassthroughSubject<CLLocation?, Never>()
+    let selectedPlaceSubject = PassthroughSubject<Place, Never>()
 
     private(set) var dataSource: UITableViewDiffableDataSource<Int, CLPlacemark>?
 
@@ -45,13 +57,17 @@ class SearchViewModel: NSObject {
 extension SearchViewModel: UITableViewDelegate {
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        guard let placemark = dataSource?.itemIdentifier(for: indexPath) else { return }
+        guard let placemark = dataSource!.itemIdentifier(for: indexPath) else {
+            fatalError("dataSource is nil or no CLPlacemark could be found")
+        }
 
         guard let location = placemark.location else {
             fatalError("unexpected: missing latitude/longitude")
         }
 
-        selectedLocationSubject.send(location)
+        let place = Place(name: placemark.titleText,
+                          coordinate: Coordinate(from: location))
+        selectedPlaceSubject.send(place)
     }
 }
 
@@ -74,5 +90,17 @@ extension SearchViewModel: UISearchResultsUpdating {
                 updateTableView(with: placemarks)
             }
         }
+    }
+}
+
+private extension CLPlacemark {
+    var cellText: String {
+        [name, locality, postalCode, administrativeArea, country]
+            .compactMap { $0 }
+            .joined(separator: ", ")
+    }
+
+    var titleText: String {
+        return name ?? locality ?? "Unknown"
     }
 }

@@ -6,7 +6,7 @@
 //
 
 import Foundation
-
+import Combine
 
 enum OpenWeatherApiError: Error {
     case invalidUrl(String?)
@@ -33,34 +33,42 @@ extension OpenWeatherApiError: Identifiable {
     }
 }
 
-// GEOCODE
-// https://api.openweathermap.org/geo/1.0/direct?q={city name},{state code},{country code}&limit={limit}&appid={API key}
-// must include country code if using state code
-// https://api.openweathermap.org/geo/1.0/zip?zip={zip code},{country code}&appid={API key}
-
-// WEATHER
-// https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API key}
 class OpenWeatherApiClient {
 
-    struct Coordinates {
-        let latitude: Double
-        let longitude: Double
-    }
-
-    func geocode(postalCode: String) async throws -> Coordinates {
-        var queryItems = [URLQueryItem]()
-        queryItems.append(URLQueryItem(name: "zip", value: postalCode))
-        queryItems.append(URLQueryItem(name: "appid", value: "..."))
-
+    var urlComponents: URLComponents {
         var components = URLComponents()
         components.scheme = "https"
         components.host = "api.openweathermap.org"
-        components.path = "/geo/1.0/zip"
-        components.queryItems = queryItems
+        return components
+    }
 
-        guard let url = components.url else {
-            throw OpenWeatherApiError.invalidUrl(components.string)
-        }
+    enum Paths: String {
+        case geocodeZip = "/geo/1.0/zip"
+        case geocodeQuery = "/geo/1.0/direct"
+        case currentWeather = "/data/2.5/weather"
+    }
+
+    func geocode(postalCode: String) async throws -> Coordinate {
+        fatalError()
+    }
+
+    func geocode(city: String) async throws -> Coordinate {
+        fatalError()
+    }
+
+    func currentConditions(for query: String) async throws -> CurrentCondition {
+        fatalError()
+    }
+
+    func currentConditions(at coordinate: Coordinate) async throws -> CurrentCondition {
+        let queryItems = [  // TODO: make composable
+            URLQueryItem(name: "lat", value: String(coordinate.latitude)),
+            URLQueryItem(name: "lon", value: String(coordinate.longitude)),
+            URLQueryItem(name: "appid", value: OPENWEATHER_APP_ID),
+            URLQueryItem(name: "units", value: "imperial")   // TODO: make configurable
+        ]
+
+        let url = try buildUrl(path: .currentWeather, queryItems: queryItems)
 
         let request = URLRequest(url: url)
         let (data, response) = try await URLSession.shared.data(for: request)
@@ -74,21 +82,17 @@ class OpenWeatherApiClient {
         }
 
         let decoder = JSONDecoder()
-        let result = try decoder.decode(GeocodeResult.self, from: data)
-
-        return Coordinates(latitude: result.latitude, longitude: result.longitude)
+        let result = try decoder.decode(CurrentCondition.self, from: data)
+        return result
     }
 
-    func geocode(city: String) async throws -> Coordinates {
-        fatalError()
-//        let result = try decoder.decode([GeocodeResult].self, from: data) // decode to an array
-    }
-
-    func currentConditions(at coordinates: Coordinates) async throws -> CurrentCondition {
-        fatalError()
-    }
-
-    func currentConditions(for query: String) async throws -> CurrentCondition {
-        fatalError()
+    private func buildUrl(path: Paths, queryItems: [URLQueryItem]) throws -> URL {
+        var components = urlComponents
+        components.path = Paths.currentWeather.rawValue
+        components.queryItems = queryItems
+        guard let url = components.url else {
+            throw OpenWeatherApiError.invalidUrl(components.string)
+        }
+        return url
     }
 }

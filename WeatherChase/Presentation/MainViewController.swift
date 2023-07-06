@@ -7,12 +7,18 @@
 
 import UIKit
 import Combine
-import CoreLocation // TODO: remove
 
 // ICONS
 // https://openweathermap.org/img/wn/{icon}@2x.png
 // for caching, icon responses include ETag, last-modified and cache-control: max-age
 
+let OPENWEATHER_APP_ID = ""
+
+/**
+    Notes:
+    1. Using Core Location for geocode instead of OpenWeather's API, since splitting the query into zip vs. city/state would have been more work.
+    2.
+ */
 class MainViewController: UIViewController {
 
     private var weatherViewModel = WeatherViewModel()
@@ -25,6 +31,21 @@ class MainViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        setupSearchController()
+
+        weatherViewModel.$weather.sink { completion in
+            print("weather completed")
+        } receiveValue: { weather in
+            print("received: \(weather)")
+        }.store(in: &subscriptions)
+
+    }
+}
+
+// MARK: - Setup SearchController
+extension MainViewController {
+
+    private func setupSearchController() {
         resultsTableViewController = storyboard?.instantiateViewController(
             identifier: "ResultsTableViewController",
             creator: createResultsController)
@@ -41,9 +62,9 @@ class MainViewController: UIViewController {
 
     private func createResultsController(_ coder: NSCoder) -> ResultsTableViewController? {
         let searchViewModel = SearchViewModel()
-        
-        searchViewModel.selectedLocationSubject
-            .sink { [weak self] location in
+
+        searchViewModel.selectedPlaceSubject
+            .sink { [weak self] place in
                 self?.searchController.dismiss(animated: true)
 
                 // clear out search
@@ -51,7 +72,7 @@ class MainViewController: UIViewController {
                 self?.searchController.searchBar.searchTextField.text = nil
 
                 // store in user defaults
-                self?.weatherViewModel.selectedLocation = location
+                self?.weatherViewModel.selectedPlace = place
             }
             .store(in: &subscriptions)
 
