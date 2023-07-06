@@ -17,9 +17,25 @@ let OPENWEATHER_APP_ID = ""
 /**
     Notes:
     1. Using Core Location for geocode instead of OpenWeather's API, since splitting the query into zip vs. city/state would have been more work.
-    2.
+    2. Would ideally use a collection view.
+    3. Needs better error handling.
  */
 class MainViewController: UIViewController {
+
+    @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
+
+    // NOTE: Ideally would make all of these separate views and cells instead of having so many outlets to one view controller
+    @IBOutlet weak var weatherStackView: UIStackView!
+    @IBOutlet weak var placeLabel: UILabel!
+    @IBOutlet weak var iconImageView: UIImageView!
+    @IBOutlet weak var currentTempLabel: UILabel!
+    @IBOutlet weak var conditionLabel: UILabel!
+    @IBOutlet weak var highTempLabel: UILabel!
+    @IBOutlet weak var lowTempLabel: UILabel!
+    @IBOutlet weak var humidityLabel: UILabel!
+    @IBOutlet weak var feelsLikeLabel: UILabel!
+    @IBOutlet weak var sunriseLabel: UILabel!
+    @IBOutlet weak var sunsetLabel: UILabel!
 
     private var weatherViewModel = WeatherViewModel()
 
@@ -27,18 +43,65 @@ class MainViewController: UIViewController {
     private var resultsTableViewController: ResultsTableViewController!
 
     private var subscriptions = Set<AnyCancellable>()
+    private lazy var formatter: DateFormatter = {
+        var formatter = DateFormatter()
+        formatter.dateStyle = .none
+        formatter.timeStyle = .medium
+        return formatter
+    }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        weatherStackView.isHidden = true
+
         setupSearchController()
 
-        weatherViewModel.$weather.sink { completion in
-            print("weather completed")
-        } receiveValue: { weather in
-            print("received: \(weather)")
-        }.store(in: &subscriptions)
+        weatherViewModel.$weather
+            .sink { completion in
+                print("weather completed")
+            } receiveValue: { [weak self] weather in
+                guard let weather = weather else { return }
+                print("received: \(weather)")
 
+                self?.populateContent(for: weather)
+            }
+            .store(in: &subscriptions)
+    }
+
+    // TODO: move formatting to view model
+    func populateContent(for weather: WeatherModel) {
+        placeLabel.text = weather.title
+        currentTempLabel.text = "\(weather.currentTemperature)º F"
+        conditionLabel.text = weather.currentConditions
+        highTempLabel.text = {
+            guard let max = weather.maximumTemperature else { return nil }
+            return "HI: \(max)º F"
+        }()
+        lowTempLabel.text = {
+            guard let min = weather.minimumTemperature else { return nil }
+            return "LO: \(min)º F"
+        }()
+        humidityLabel.text = "Humidity: \(weather.humidity)%"
+        feelsLikeLabel.text = {
+            guard let feelsLike = weather.feelsLike else { return nil }
+            return "Feels Like: \(feelsLike)º F"
+        }()
+        sunriseLabel.text = {
+            guard let sunrise = weather.sunrise else { return nil }
+            return "Sunrise: \(formatter.string(from: Date(timeIntervalSince1970: sunrise)))"
+        }()
+        sunsetLabel.text = {
+            guard let sunset = weather.sunset else { return nil }
+            return "Sunset: \(formatter.string(from: Date(timeIntervalSince1970: sunset)))"
+        }()
+/*
+        iconImageView.image = {
+
+        }()
+*/
+        activityIndicator.stopAnimating()
+        weatherStackView.isHidden = false
     }
 }
 
@@ -73,6 +136,8 @@ extension MainViewController {
 
                 // store in user defaults
                 self?.weatherViewModel.selectedPlace = place
+
+                self?.activityIndicator.startAnimating()
             }
             .store(in: &subscriptions)
 
